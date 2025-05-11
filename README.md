@@ -44,7 +44,7 @@
 
 ![Добовление нового диска и ребилд рейда](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Raid/%D0%9F%D0%B0%D1%80%D1%82%D0%B8%D1%86%D0%B8%D0%B8.png)
 
-
+Смонтированные партиции на новом рэйде
 
 <h2 align="center">Скрипт</h2>
 
