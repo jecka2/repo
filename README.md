@@ -111,6 +111,8 @@ mdadm -D /dev/md0
 
 ```
 </ul>
+</ul></details>
+
 
 <details><summary><code><h2>Файловые системы и LVM - 1</h2></code></summary><ul>
 
