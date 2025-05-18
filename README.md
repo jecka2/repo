@@ -1,7 +1,7 @@
 # Домашние задания по Otus
 
 
-<details><summary>01. Raid массивы </summary>
+<details><summary><code>01. Raid массивы </code></summary>
 
 ### Описание задания 
 
