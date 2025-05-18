@@ -343,6 +343,39 @@ jecka@otus:/mnt$ sudo cat /etc/fstab
 UUID=416e71ad-df98-4945-a83c-89a9d7fd14cf /mnt ext4 defaults 0 2
 jecka@otus:/mnt$
 
+jecka@otus:/msudo findmnt --verify --verbose
+/
+   [ ] target exists
+   [ ] source /dev/disk/by-id/dm-uuid-LVM-eQHuGCwKkmF9rdmNAUEHoUANHpn0FKEsAunYNN504dyjFcaTLwYyCR9MVbrdN7PC exists
+   [ ] FS type is ext4
+/boot
+   [ ] target exists
+   [ ] source /dev/disk/by-uuid/82a2adc5-bd04-4577-b9c0-3e5d81794ef2 exists
+   [ ] FS type is ext4
+none
+   [W] non-bind mount source /swap.img is a directory or regular file
+   [ ] FS type is swap
+/mnt
+   [ ] target exists
+   [ ] UUID=416e71ad-df98-4945-a83c-89a9d7fd14cf translated to /dev/mapper/otus-test
+   [ ] source /dev/mapper/otus-test exists
+   [ ] FS type is ext4
+
+0 parse errors, 0 errors, 1 warning
+jecka@otus:/mnt$ sudo cat /etc/fstab
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+# / was on /dev/ubuntu-vg/ubuntu-lv during curtin installation
+/dev/disk/by-id/dm-uuid-LVM-eQHuGCwKkmF9rdmNAUEHoUANHpn0FKEsAunYNN504dyjFcaTLwYyCR9MVbrdN7PC / ext4 defaults 0 1
+# /boot was on /dev/sda2 during curtin installation
+/dev/disk/by-uuid/82a2adc5-bd04-4577-b9c0-3e5d81794ef2 /boot ext4 defaults 0 1
+/swap.img       none    swap    sw      0       0
+UUID=416e71ad-df98-4945-a83c-89a9d7fd14cf /mnt ext4 defaults 0 2
 
 
 
