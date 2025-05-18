@@ -120,17 +120,22 @@ mdadm -D /dev/md0
 ### Описание задания 
 
 • Настроить LVM в Ubuntu 24.04 Server
+
 • Создать Physical Volume, Volume Group и Logical Volume
+
 • Отформатировать и смонтировать файловую систему
+
 • Расширить файловую систему за счёт нового диска
+
 • Выполнить resize
+
 • Проверить корректность работы
 
 <h2 align="center">Отчет</h2>
 
 <br>
 
-details><summary> </code></summary><ul>
+<details><summary> </code></summary><ul>
 
 ```bash
 Отчет  будет предоставлен в виде команд 
