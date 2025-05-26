@@ -1,9 +1,8 @@
 # Домашние задания по Otus
 
-
 <details><summary><code>01.Raid массивы </code></summary>
 
-### Описание задания 
+### Описание задания
 
 • Добавить в виртуальную машину несколько дисков
 
@@ -14,25 +13,22 @@
 • Создать GPT таблицу, пять разделов и смонтировать их в системе.
 
 На проверку отправьте:
-скрипт для создания рейда, 
+скрипт для создания рейда,
 отчет по командам для починки RAID и созданию разделов.
 
 <h2 align="center">Отчет</h2>
 
-Отчет предоставлен в виде набора скриншотов  представленных ниже 
-
+Отчет предоставлен в виде набора скриншотов  представленных ниже
 
 ![Проверка создания Raid](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Raid/%D0%9F%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0%20Raid.png)
 
 Согласно указанным выше данным мы создали  Raid массив из 5 дисков  тип Raid 6
 
-
 ![Отмечаем сбойный диск и удаляем его](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Raid/Fail%26Remove.png)
 
 Производим  отметку о том, что диск "сломан"  и удаляем его из дискового массива
 
-
-![Добовление нового диска и ребилд рейда](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Raid/Add%26Rebild.png) 
+![Добовление нового диска и ребилд рейда](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Raid/Add%26Rebild.png)
 
 Производим добовление якобы "нового" диска взамен вышедшего из строя и система производит процесс восстановления массива
 
@@ -44,7 +40,6 @@
 
 <ul>
 <li><details><summary>Скрипт</summary>
-
 
 ```bash
 #!/bin/bash
@@ -106,15 +101,14 @@ cat /proc/mdstat
 mdadm -D /dev/md0
 
 ```
+
 </li>
 </details> </ul>
 </details>
 
-
 <details><summary><code>02.Файловые системы и LVM</code></summary>
 
-
-### Описание задания 
+### Описание задания
 
 • Настроить LVM в Ubuntu 24.04 Server
 
@@ -132,13 +126,11 @@ mdadm -D /dev/md0
 
 <br>
 
-### Работа с LVM 
-
+### Работа с LVM
 
 ## Отчет  будет предоставлен в виде команд и ответа системы
 
 <br>
-
 
 ```bash
 
@@ -157,24 +149,25 @@ jecka@otus:~$ sudo lvmdiskscan
 
 ```
 
-### Создаем Physical Volume 
+### Создаем Physical Volume
 
-
-```bash 
+```bash
 
 jecka@otus:~$ sudo pvcreate /dev/sdb
   Physical volume "/dev/sdb" successfully created.
 
 ```
+
 ### Создаем Volume Group
 
-```bash 
+```bash
 jecka@otus:~$ sudo vgcreate otus  /dev/sdb
   Volume group "otus" successfully created
 ```
+
 ### Создаем Logical Voilume размером 80% ( свободного места ) от  размера Volum Group и показываем его свойства
 
-```bash 
+```bash
 jecka@otus:~$ sudo lvcreate -l+80%FREE -n test otus
   Logical volume "test" created.
 jecka@otus:~$ sudo vgdisplay otus
@@ -221,6 +214,7 @@ jecka@otus:~$ sudo lvdisplay /dev/otus/test
   Block device           252:1
 
 ```
+
 ### Создаем дополнительный Logical Volume размером 100M с последующим созданием на нем файловой системы ext4  
 
 ```bash
@@ -240,7 +234,7 @@ Creating journal (16384 blocks): done
 Writing superblocks and filesystem accounting information: done
 ```
 
-### Создание Pysical Volume и расширение Volume Group при помощи созданного Pysical Volume 
+### Создание Pysical Volume и расширение Volume Group при помощи созданного Pysical Volume
 
 ```bash
 jecka@otus:~$ sudo pvcreate /dev/sdc
@@ -382,3 +376,202 @@ UUID=416e71ad-df98-4945-a83c-89a9d7fd14cf /mnt ext4 defaults 0 2
 ```
 
 </ul></details>
+<details><summary><code>05.ZFS </code></summary>
+
+
+### Описание задания
+
+Определить алгоритм с наилучшим сжатием:
+Определить какие алгоритмы сжатия поддерживает zfs (gzip, zle, lzjb, lz4);
+создать 4 файловых системы на каждой применить свой алгоритм сжатия;
+для сжатия использовать либо текстовый файл, либо группу файлов.
+Определить настройки пула.
+С помощью команды zfs import собрать pool ZFS.
+Командами zfs определить настройки:
+   
+- размер хранилища;
+    
+- тип pool;
+    
+- значение recordsize;
+   
+- какое сжатие используется;
+   
+- какая контрольная сумма используется.
+Работа со снапшотами:
+скопировать файл из удаленной директории;
+восстановить файл локально. zfs receive;
+найти зашифрованное сообщение в файле secret_message.
+
+### Описание выполнения
+
+#### 1. Создание ZFS Пулов
+
+```bash
+jecka@otus:~$ sudo zpool create gzip mirror /dev/sdb /dev/sdc
+jecka@otus:~$ sudo zpool create zle mirror /dev/sdd /dev/sde
+jecka@otus:~$ sudo zpool create lzjb mirror /dev/sdf /dev/sdg
+jecka@otus:~$ sudo zpool create gzip mirror /dev/sdb /dev/sdc
+jecka@otus:~$ sudo zpool create zle mirror /dev/sdd /dev/sde
+```
+#### 1.1 Выводим информацию  о созданных  пулах  используя команду 
+
+```bash
+sudo zpool list
+```
+ ![Результат выполннения запроса на  предоставления данных  о созданных ZFS пулах](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/zpool%20list.jpg)
+
+#### 1.2 Включаем компрессию на zfs пулах
+
+```bash
+jecka@otus:~$ sudo zfs set compression=gzip-9 gzip
+jecka@otus:~$ sudo zfs set compression=lz4 lz4
+jecka@otus:~$ sudo zfs set compression=lzjb lzjb
+jecka@otus:~$ sudo zfs set compression=zle zle
+
+```
+ ![Результат выполннения запроса  о включенной компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/zpool%20list.jpg)
+
+#### 1.3 Выясняем какая компрессия лучше 
+
+Скачиваем один и тот же файл на разные ZFS пулы. После скачивания проверям какой обьем был использован
+
+
+```bash
+jecka@otus:/$ zfs list
+jecka@otus:/$ zfs get all | grep compressratio | grep -v ref
+```
+![Результат выполннения запроса  о занятом пространстве и  компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/zpool%20list.jpg)
+
+
+По результатам указанным выше мы узнаем, что компресиия gzip-9 явялется в данном случае лучшей, так как файл занимает меньше места.
+
+
+### 2. Определение насроек пула
+
+#### 2.1 Импорт пула 
+
+Скачивем "образ" пула и  разворачиваем в нашей системе 
+
+![Результат выполннения запроса  о занятом пространстве и  компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/zpool%20list.jpg)
+
+
+
+#### 2.2 Пулчаем параметры ZFS пула
+
+```bash
+jecka@otus:~/zpoolexport$ zpool get all otus
+NAME  PROPERTY                       VALUE                          SOURCE
+otus  size                           480M                           -
+otus  capacity                       0%                             -
+otus  altroot                        -                              default
+otus  health                         ONLINE                         -
+otus  guid                           6554193320433390805            -
+otus  version                        -                              default
+otus  bootfs                         -                              default
+otus  delegation                     on                             default
+otus  autoreplace                    off                            default
+otus  cachefile                      -                              default
+otus  failmode                       wait                           default
+otus  listsnapshots                  off                            default
+otus  autoexpand                     off                            default
+otus  dedupratio                     1.00x                          -
+otus  free                           478M                           -
+otus  allocated                      2.09M                          -
+otus  readonly                       off                            -
+otus  ashift                         0                              default
+otus  comment                        -                              default
+otus  expandsize                     -                              -
+otus  freeing                        0                              -
+otus  fragmentation                  0%                             -
+otus  leaked                         0                              -
+otus  multihost                      off                            default
+otus  checkpoint                     -                              -
+otus  load_guid                      15276750415685578067           -
+otus  autotrim                       off                            default
+otus  compatibility                  off                            default
+otus  bcloneused                     0                              -
+otus  bclonesaved                    0                              -
+otus  bcloneratio                    1.00x                          -
+otus  feature@async_destroy          enabled                        local
+otus  feature@empty_bpobj            active                         local
+otus  feature@lz4_compress           active                         local
+otus  feature@multi_vdev_crash_dump  enabled                        local
+otus  feature@spacemap_histogram     active                         local
+otus  feature@enabled_txg            active                         local
+otus  feature@hole_birth             active                         local
+otus  feature@extensible_dataset     active                         local
+otus  feature@embedded_data          active                         local
+otus  feature@bookmarks              enabled                        local
+otus  feature@filesystem_limits      enabled                        local
+otus  feature@large_blocks           enabled                        local
+otus  feature@large_dnode            enabled                        local
+otus  feature@sha512                 enabled                        local
+otus  feature@skein                  enabled                        local
+otus  feature@edonr                  enabled                        local
+otus  feature@userobj_accounting     active                         local
+otus  feature@encryption             enabled                        local
+otus  feature@project_quota          active                         local
+otus  feature@device_removal         enabled                        local
+otus  feature@obsolete_counts        enabled                        local
+otus  feature@zpool_checkpoint       enabled                        local
+otus  feature@spacemap_v2            active                         local
+otus  feature@allocation_classes     enabled                        local
+otus  feature@resilver_defer         enabled                        local
+otus  feature@bookmark_v2            enabled                        local
+otus  feature@redaction_bookmarks    disabled                       local
+otus  feature@redacted_datasets      disabled                       local
+otus  feature@bookmark_written       disabled                       local
+otus  feature@log_spacemap           disabled                       local
+otus  feature@livelist               disabled                       local
+otus  feature@device_rebuild         disabled                       local
+otus  feature@zstd_compress          disabled                       local
+otus  feature@draid                  disabled                       local
+otus  feature@zilsaxattr             disabled                       local
+otus  feature@head_errlog            disabled                       local
+otus  feature@blake3                 disabled                       local
+otus  feature@block_cloning          disabled                       local
+otus  feature@vdev_zaps_v2           disabled                       local
+jecka@otus:~/zpoolexport$ sudo zfs get recordsize otus
+NAME  PROPERTY    VALUE    SOURCE
+otus  recordsize  128K     local
+jecka@otus:~/zpoolexport$ zpool status
+
+ pool: otus
+ state: ONLINE
+status: Some supported and requested features are not enabled on the pool.
+	The pool can still be used, but some features are unavailable.
+action: Enable all features using 'zpool upgrade'. Once this is done,
+	the pool may no longer be accessible by software that does not support
+	the features. See zpool-features(7) for details.
+config:
+
+	NAME                               STATE     READ WRITE CKSUM
+	otus                               ONLINE       0     0     0
+	  mirror-0                         ONLINE       0     0     0
+	    /home/jecka/zpoolexport/filea  ONLINE       0     0     0
+	    /home/jecka/zpoolexport/fileb  ONLINE       0     0     0
+
+errors: No known data errors
+```
+
+Из данных выше мы видим  некоторые параметры:
+<br>
+Размер пула - 480M
+<br>
+Компрессия  - lz4
+<br>
+recordsize  128K
+<br>
+Тип пула - зеркало 
+<br>
+
+
+
+
+
+
+
+
+
+
