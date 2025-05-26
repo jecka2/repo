@@ -535,6 +535,9 @@ otus  feature@vdev_zaps_v2           disabled                       local
 jecka@otus:~/zpoolexport$ sudo zfs get recordsize otus
 NAME  PROPERTY    VALUE    SOURCE
 otus  recordsize  128K     local
+jecka@otus:/gzip$ zfs get checksum otus
+NAME  PROPERTY  VALUE      SOURCE
+otus  checksum  sha256     local
 jecka@otus:~/zpoolexport$ zpool status
 
  pool: otus
@@ -565,6 +568,7 @@ recordsize  128K
 <br>
 Тип пула - зеркало 
 <br>
+Чек сумма - sha256
 
 
 ### 3. Работа со снапшотами
