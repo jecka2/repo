@@ -430,7 +430,7 @@ jecka@otus:~$ sudo zfs set compression=lzjb lzjb
 jecka@otus:~$ sudo zfs set compression=zle zle
 
 ```
- ![Результат выполннения запроса  о включенной компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/zpool%20list.jpg)
+ ![Результат выполннения запроса  о включенной компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/compression.jpg)
 
 #### 1.3 Выясняем какая компрессия лучше 
 
@@ -441,19 +441,19 @@ jecka@otus:~$ sudo zfs set compression=zle zle
 jecka@otus:/$ zfs list
 jecka@otus:/$ zfs get all | grep compressratio | grep -v ref
 ```
-![Результат выполннения запроса  о занятом пространстве и  компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/zpool%20list.jpg)
+![Результат выполннения запроса  о занятом пространстве и  компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/zip.jpg)
 
 
 По результатам указанным выше мы узнаем, что компресиия gzip-9 явялется в данном случае лучшей, так как файл занимает меньше места.
 
 
-### 2. Определение насроек пула
+### 2. Определение настроек пула
 
 #### 2.1 Импорт пула 
 
 Скачивем "образ" пула и  разворачиваем в нашей системе 
 
-![Результат выполннения запроса  о занятом пространстве и  компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/zpool%20list.jpg)
+![Результат выполннения запроса  о занятом пространстве и  компресии](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Zfs/Import%20ZFS%20Pools.png)
 
 
 
@@ -567,9 +567,103 @@ recordsize  128K
 <br>
 
 
+### 3. Работа со снапшотами
+#### 3.1  Копирование файла из удаленной директории
+
+```bash
+jecka@otus:~$ sudo zfs snapshot gzip@n001
+jecka@otus:~$ zfs list -t snapshot
+NAME        USED  AVAIL  REFER  MOUNTPOINT
+gzip@n001     0B      -  51.1M  -
+jecka@otus:~$ zfs list -t snapshot
+NAME        USED  AVAIL  REFER  MOUNTPOINT
+gzip@n001     0B      -  51.1M  -
+jecka@otus:~$ cd /gzip/
+jecka@otus:/gzip$ ls -la
+total 52311
+drwxr-xr-x  2 root root         3 May 26 21:00 .
+drwxr-xr-x 29 root root      4096 May 26 23:22 ..
+-rw-r--r--  1 root root 139921497 May 25  2021 rockyou.txt
+jecka@otus:/gzip$ sudo rm rockyou.txt 
+jecka@otus:/gzip$ sudo zfs rollback gzip@n001
+jecka@otus:/gzip$ ls -la
+total 52311
+drwxr-xr-x  2 root root         3 May 26 21:00 .
+drwxr-xr-x 29 root root      4096 May 26 23:22 ..
+-rw-r--r--  1 root root 139921497 May 25  2021 rockyou.txt
+jecka@otus:/gzip$ 
+```
+Восстановление произведено из снапшота диска
+
+#### 3.2 восстановить файл локально. zfs receive;
+
+```bash
+jecka@otus:/gzip$ sudo zfs send gzip@n001 > /tmp/gzip.zfs
+jecka@otus:~$ sudo zfs destroy gzip@n001
+jecka@otus:/gzip$ sudo rm rockyou.txt 
+jecka@otus:/gzip$ ls -la
+total 5
+drwxr-xr-x  2 root root    2 May 26 23:35 .
+drwxr-xr-x 29 root root 4096 May 26 23:22 ..
+jecka@otus:/gzip$ cd ~ 
+jecka@otus:~$ sudo zfs receive gzip </tmp/gzip.zfs 
+jecka@otus:~$ sudo zfs receive -F  gzip </tmp/gzip.zfs 
+jecka@otus:~$ cd /gzip/
+jecka@otus:/gzip$ ls -la
+total 52311
+drwxr-xr-x  2 root root         3 May 26 21:00 .
+drwxr-xr-x 29 root root      4096 May 26 23:38 ..
+-rw-r--r--  1 root root 139921497 May 25  2021 rockyou.txt
+jecka@otus:/gzip$ 
+
+```
+Произведена копия снимка в виде файла и сохранен в /tmp/gzip.zfs
+<br>
+Произведено удаление снимка
+<br>
+Произведено удаление файла rockyou.txt на zfs пуле gzip 
+<br>
+Произведено восстановление из файла gzip.zfs
 
 
+#### 3.3 найти зашифрованное сообщение в файле secret_message.
 
+```bash
+jecka@otus:~$ wget -O otus_task2.file --no-check-certificate https://drive.usercontent.google.com/download?id=1wgxjih8YZ-cqLqaZVa0lA3h3Y029c3oI&export=download
+[1] 4408
+jecka@otus:~$ 
+Redirecting output to ‘wget-log’.
+
+[1]+  Done                    wget -O otus_task2.file --no-check-certificate https://drive.usercontent.google.com/download?id=1wgxjih8YZ-cqLqaZVa0lA3h3Y029c3oI
+jecka@otus:~$ zfs receive otus/test@today < otus_task2.file
+cannot receive new filesystem stream: permission denied
+jecka@otus:~$ sudo zfs receive otus/test@today < otus_task2.file
+[sudo] password for jecka: 
+jecka@otus:~$ cd /otus/
+hometask2/ test/      
+jecka@otus:~$ cd /otus/test/
+jecka@otus:/otus/test$ ls -la
+total 2591
+drwxr-xr-x 3 root  root       11 May 15  2020 .
+drwxr-xr-x 4 root  root        4 May 26 22:57 ..
+-rw-r--r-- 1 root  root        0 May 15  2020 10M.file
+-rw-r--r-- 1 root  root   727040 May 15  2020 cinderella.tar
+-rw-r--r-- 1 root  root       65 May 15  2020 for_examaple.txt
+-rw-r--r-- 1 root  root        0 May 15  2020 homework4.txt
+-rw-r--r-- 1 root  root   309987 May 15  2020 Limbo.txt
+-rw-r--r-- 1 root  root   509836 May 15  2020 Moby_Dick.txt
+drwxr-xr-x 3 jecka jecka       4 Dec 18  2017 task1
+-rw-r--r-- 1 root  root  1209374 May  6  2016 War_and_Peace.txt
+-rw-r--r-- 1 root  root   398635 May 15  2020 world.sql
+jecka@otus:/otus/test$ find /otus/test -name "secret_message"
+/otus/test/task1/file_mess/secret_message
+jecka@otus:/otus/test$ cd task1/file_mess/
+jecka@otus:/otus/test/task1/file_mess$ cat secret_message 
+https://otus.ru/lessons/linux-hl/
+
+```
+
+В "secret message" - https://otus.ru/lessons/linux-hl/
 
 
 
