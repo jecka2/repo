@@ -668,8 +668,101 @@ https://otus.ru/lessons/linux-hl/
 ```
 
 В "secret message" - https://otus.ru/lessons/linux-hl/
+</ul></details>
+
+<details><summary><code>06.Работы с NFS</code></summary>
+
+
+### Описание задания
+
+Необходимс создать 2 скрипта которы будут в автоматическом  режиме  производить настройку NFS
+<br>
+1-ый скрипт - [nfsc_script.sh](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/nfs/nfsc_script.sh) -  производит настройку сервера 
+<br>
+2-ой скрпит - [ndss_sctipt.sh](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/nfs/ndss_sctipt.sh) -  произвыодит натсрокй клиента 
+
+
+### Решение
+
+####  1.1 Настройка сервера 
+
+```bash
+#!/bin/bash
+
+echo "скрипт настройки сервера NFS"
+sleep 5
+# Проверка запуска от имени root
+if [[ "$EUID" != 0 ]]; then
+   echo "Ошибка! Скрипт необходимо запускать от имени root." >&2
+   exit 1
+fi
+
+apt update && apt install  nfs-kernel-server -y
+
+mkdir -p /mnt/share/upload
+chown -R nobody:nogroup /mnt/share
+chmod 0777 /mnt/share/upload
+
+echo  "/mnt/share *(rw.sync,root_squash)" | tee -a /etc/exportfs
+
+exportfs -r
+exportfs -s
+
+echo "Настройка проведена. Не забудьте запустить скрипт настройки клиента на клиентской машине"
+```
+
+
+Скрипт выполняет следующие действия:
+<br>
+Провереяет, что запущен с правми sudo
+<br>
+Обновляет и устанавливает необходимые для работы пакеты
+<br>
+Проводит создание директории /mnt/share/uppload   назначет права на директорию 
+<br>
+Добавляет строчку для настройки сервиса NFS
 
 
 
+####  1.2 Настройка клиента
+
+```bash
+#!/bin/bash
+
+DIRECTORY="/mnt/upload/"
 
 
+echo "скрипт настройки Клиента NFS"
+sleep 5
+# Проверка запуска от имени root
+if [[ "$EUID" != 0 ]]; then
+   echo "Ошибка! Скрипт необходимо запускать от имени root." >&2
+   exit 1
+fi
+
+apt update && apt install nfs-common -y
+echo "192.168.1.14:/mnt/share /mnt nfs vers=3,noauto,systemd.automount 0 0" >> /etc/fstab
+
+systemd daemon-reload
+systemd restart remote-fs.target
+
+touch $DIRECTORY/test_file
+
+# Поиск файлов в заданной директории
+for file in "$DIRECTORY"/*; do
+    if [[ -f "$file" ]]; then
+        # Запись найденных файлов в журнал
+        echo "Файл обнаружен: $(basename "$file")"
+    fi
+done
+```
+Скрипт выполняет следующие действия:
+<br>
+Проверяет, что скрипт выполняется от с правами sudo  
+<br>
+Производит установку необходимых компанентов
+<br>
+Создает насчтрокй для автоматческого подключения ( монтрования)  директории на NFS
+<br>
+Создает файл и проверяет, что он созадался
+<br>
