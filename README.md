@@ -766,3 +766,521 @@ done
 <br>
 Создает файл и проверяет, что он созадался
 <br>
+</ul></details>
+
+<details><summary><code> 07.Управление пакетами. Дистрибьюция софта</code></summary>
+
+
+
+### Задание
+
+Создать свой RPM (можно взять свое приложение, либо собрать к примеру Apache с определенными опциями);
+
+Создать свой репозиторий и разместить там ранее собранный RPM;
+
+Сеализовать это все либо в Vagrant, либо развернуть у себя через Nginx и дать ссылку на репозиторий.
+
+
+### Реализация
+
+
+##### 1.1 Подготовка
+
+Устанавливаем необходимые компаненты:
+
+<ul>
+
+```bash
+
+[jecka@localhost ~]$ dnf install -y wget rpmdevtools rpm-build createrepo yum-utils cmake gcc git nano
+Ошибка: Эту команду нужно запускать с привилегиями суперпользователя (на большинстве систем - под именем пользователя root).
+[jecka@localhost ~]$ sudo dnf install -y wget rpmdevtools rpm-build createrepo yum-utils cmake gcc git nano
+[sudo] пароль для jecka:
+Последняя проверка окончания срока действия метаданных: 1:54:47 назад, Пн 02 июн 2025 21:02:36.
+Пакет wget-1.21.3-4.red80.x86_64 уже установлен.
+Пакет gcc-12.4.0-1.red80.x86_64 уже установлен.
+Пакет git-2.48.1-1.red80.x86_64 уже установлен.
+Пакет nano-8.0-1.red80.x86_64 уже установлен.
+Зависимости разрешены.
+==============================================================================================================================================================================================================================================================================================
+ Пакет                                                                     Архитектура                                              Версия                                                                                    Репозиторий                                               Размер
+==============================================================================================================================================================================================================================================================================================
+Установка:
+ cmake                                                                     x86_64                                                   3.28.3-1.red80                                                                            updates                                                   8.0 M
+ createrepo_c                                                              x86_64                                                   0.20.1-1.red80                                                                            base                                                       72 k
+ dnf-utils                                                                 noarch                                                   4.4.2-1.red80                                                                             base                                                       33 k
+ rpm-build                                                                 x86_64                                                   4.18.2-3.red80                                                                            updates                                                    63 k
+ rpmdevtools                                                               noarch                                                   9.5-5.red80                                                                               updates                                                    89 k
+Установка зависимостей:
+ annobin-docs                                                              noarch                                                   10.94-3.red80                                                                             base                                                       70 k
+ annobin-plugin-gcc                                                        x86_64                                                   10.94-3.red80                                                                             base                                                      865 k
+ cmake-data                                                                noarch                                                   3.28.3-1.red80                                                                            updates                                                   1.8 M
+ cmake-rpm-macros                                                          noarch                                                   3.28.3-1.red80                                                                            updates                                                    10 k
+ createrepo_c-libs                                                         x86_64                                                   0.20.1-1.red80                                                                            base                                                      102 k
+ debugedit                                                                 x86_64                                                   5.0-5.red80                                                                               base                                                       76 k
+ drpm                                                                      x86_64                                                   0.5.0-6.red80                                                                             base                                                       61 k
+ dwz                                                                       x86_64                                                   0.15-2.red80                                                                              base                                                      135 k
+ fakeroot                                                                  x86_64                                                   1.25.3-4.red80                                                                            base                                                       86 k
+ fakeroot-libs                                                             x86_64                                                   1.25.3-4.red80                                                                            base                                                       38 k
+ gcc-plugin-annobin                                                        x86_64                                                   12.4.0-1.red80                                                                            updates                                                    30 k
+ http-parser                                                               x86_64                                                   2.9.4-6.red80                                                                             base                                                       35 k
+ jsoncpp                                                                   x86_64                                                   1.9.5-1.red80                                                                             base                                                       97 k
+ koji                                                                      noarch                                                   1.35.1-1.red80                                                                            updates                                                   234 k
+ libgit2                                                                   x86_64                                                   1.7.2-2.red80                                                                             base                                                      533 k
+ perl-srpm-macros                                                          noarch                                                   1-24.red80                                                                                base                                                      7.6 k
+ python-srpm-macros                                                        noarch                                                   3.11-4.red80                                                                              updates                                                    19 k
+ python3-argcomplete                                                       noarch                                                   2.0.0-1.red80                                                                             base                                                       70 k
+ python3-babel                                                             noarch                                                   2.12.1-1.red80                                                                            updates                                                   6.6 M
+ python3-decorator                                                         noarch                                                   5.1.1-4.red80                                                                             base                                                       30 k
+ python3-gssapi                                                            x86_64                                                   1.7.3-3.red80                                                                             base                                                      548 k
+ python3-koji                                                              noarch                                                   1.35.1-1.red80                                                                            updates                                                   431 k
+ python3-progressbar2                                                      noarch                                                   3.53.2-6.red80                                                                            base                                                       67 k
+ python3-pygit2                                                            x86_64                                                   1.13.3-2.red80                                                                            base                                                      251 k
+ python3-requests-gssapi                                                   noarch                                                   1.2.3-6.red80                                                                             base                                                       27 k
+ python3-utils                                                             noarch                                                   3.1.0-3.red80                                                                             base                                                       43 k
+ redos-rpm-config                                                          noarch                                                   1.2-14.red80                                                                              updates                                                    55 k
+ rhash                                                                     x86_64                                                   1.4.2-2.red80                                                                             base                                                      184 k
+ systemd-rpm-macros                                                        noarch                                                   253.30-1.red80                                                                            updates                                                    12 k
+ xemacs-filesystem                                                         noarch                                                   21.5.34-43.20200331hge2ac728aa576.red80                                                   base                                                      7.9 k
+ zchunk-libs                                                               x86_64                                                   1.5.1-1.red80                                                                             updates                                                    50 k
+Установка слабых зависимостей:
+ python3-rpmautospec                                                       noarch                                                   0.3.0-1.red80                                                                             base                                                       55 k
+
+Результат транзакции
+==============================================================================================================================================================================================================================================================================================
+Установка  37 Пакетов
+
+Объем загрузки: 21 M
+Объем изменений: 82 M
+Загрузка пакетов:
+(1/37): createrepo_c-0.20.1-1.red80.x86_64.rpm                                                                                                                                                                                                                508 kB/s |  72 kB     00:00
+(2/37): annobin-docs-10.94-3.red80.noarch.rpm                                                                                                                                                                                                                 326 kB/s |  70 kB     00:00
+(3/37): createrepo_c-libs-0.20.1-1.red80.x86_64.rpm                                                                                                                                                                                                           724 kB/s | 102 kB     00:00
+(4/37): annobin-plugin-gcc-10.94-3.red80.x86_64.rpm                                                                                                                                                                                                           2.3 MB/s | 865 kB     00:00
+(5/37): debugedit-5.0-5.red80.x86_64.rpm                                                                                                                                                                                                                      276 kB/s |  76 kB     00:00
+(6/37): dnf-utils-4.4.2-1.red80.noarch.rpm                                                                                                                                                                                                                    121 kB/s |  33 kB     00:00
+(7/37): drpm-0.5.0-6.red80.x86_64.rpm                                                                                                                                                                                                                         230 kB/s |  61 kB     00:00
+(8/37): dwz-0.15-2.red80.x86_64.rpm                                                                                                                                                                                                                           978 kB/s | 135 kB     00:00
+(9/37): fakeroot-1.25.3-4.red80.x86_64.rpm                                                                                                                                                                                                                    417 kB/s |  86 kB     00:00
+(10/37): fakeroot-libs-1.25.3-4.red80.x86_64.rpm                                                                                                                                                                                                              184 kB/s |  38 kB     00:00
+(11/37): http-parser-2.9.4-6.red80.x86_64.rpm                                                                                                                                                                                                                 260 kB/s |  35 kB     00:00
+(12/37): jsoncpp-1.9.5-1.red80.x86_64.rpm                                                                                                                                                                                                                     474 kB/s |  97 kB     00:00
+(13/37): libgit2-1.7.2-2.red80.x86_64.rpm                                                                                                                                                                                                                     2.5 MB/s | 533 kB     00:00
+(14/37): perl-srpm-macros-1-24.red80.noarch.rpm                                                                                                                                                                                                               101 kB/s | 7.6 kB     00:00
+(15/37): python3-argcomplete-2.0.0-1.red80.noarch.rpm                                                                                                                                                                                                         493 kB/s |  70 kB     00:00
+(16/37): python3-decorator-5.1.1-4.red80.noarch.rpm                                                                                                                                                                                                           217 kB/s |  30 kB     00:00
+(17/37): python3-gssapi-1.7.3-3.red80.x86_64.rpm                                                                                                                                                                                                              3.8 MB/s | 548 kB     00:00
+(18/37): python3-progressbar2-3.53.2-6.red80.noarch.rpm                                                                                                                                                                                                       319 kB/s |  67 kB     00:00
+(19/37): python3-pygit2-1.13.3-2.red80.x86_64.rpm                                                                                                                                                                                                             1.2 MB/s | 251 kB     00:00
+(20/37): python3-requests-gssapi-1.2.3-6.red80.noarch.rpm                                                                                                                                                                                                     199 kB/s |  27 kB     00:00
+(21/37): python3-rpmautospec-0.3.0-1.red80.noarch.rpm                                                                                                                                                                                                         271 kB/s |  55 kB     00:00
+(22/37): python3-utils-3.1.0-3.red80.noarch.rpm                                                                                                                                                                                                               213 kB/s |  43 kB     00:00
+(23/37): rhash-1.4.2-2.red80.x86_64.rpm                                                                                                                                                                                                                       1.3 MB/s | 184 kB     00:00
+(24/37): xemacs-filesystem-21.5.34-43.20200331hge2ac728aa576.red80.noarch.rpm                                                                                                                                                                                  56 kB/s | 7.9 kB     00:00
+(25/37): cmake-rpm-macros-3.28.3-1.red80.noarch.rpm                                                                                                                                                                                                           101 kB/s |  10 kB     00:00
+(26/37): cmake-data-3.28.3-1.red80.noarch.rpm                                                                                                                                                                                                                 8.9 MB/s | 1.8 MB     00:00
+(27/37): gcc-plugin-annobin-12.4.0-1.red80.x86_64.rpm                                                                                                                                                                                                         194 kB/s |  30 kB     00:00
+(28/37): koji-1.35.1-1.red80.noarch.rpm                                                                                                                                                                                                                       1.6 MB/s | 234 kB     00:00
+(29/37): cmake-3.28.3-1.red80.x86_64.rpm                                                                                                                                                                                                                       15 MB/s | 8.0 MB     00:00
+(30/37): python-srpm-macros-3.11-4.red80.noarch.rpm                                                                                                                                                                                                           101 kB/s |  19 kB     00:00
+(31/37): redos-rpm-config-1.2-14.red80.noarch.rpm                                                                                                                                                                                                             508 kB/s |  55 kB     00:00
+(32/37): python3-koji-1.35.1-1.red80.noarch.rpm                                                                                                                                                                                                               2.3 MB/s | 431 kB     00:00
+(33/37): rpm-build-4.18.2-3.red80.x86_64.rpm                                                                                                                                                                                                                  438 kB/s |  63 kB     00:00
+(34/37): rpmdevtools-9.5-5.red80.noarch.rpm                                                                                                                                                                                                                   629 kB/s |  89 kB     00:00
+(35/37): python3-babel-2.12.1-1.red80.noarch.rpm                                                                                                                                                                                                               13 MB/s | 6.6 MB     00:00
+(36/37): systemd-rpm-macros-253.30-1.red80.noarch.rpm                                                                                                                                                                                                          98 kB/s |  12 kB     00:00
+(37/37): zchunk-libs-1.5.1-1.red80.x86_64.rpm                                                                                                                                                                                                                 410 kB/s |  50 kB     00:00
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Общий размер                                                                                                                                                                                                                                                  7.9 MB/s |  21 MB     00:02
+Проверка транзакции
+Проверка транзакции успешно завершена.
+Идет проверка транзакции
+Тест транзакции проведен успешно.
+Выполнение транзакции
+  Подготовка       :                                                                                                                                                                                                                                                                      1/1
+  Установка        : cmake-rpm-macros-3.28.3-1.red80.noarch                                                                                                                                                                                                                              1/37
+  Установка        : dwz-0.15-2.red80.x86_64                                                                                                                                                                                                                                             2/37
+  Установка        : debugedit-5.0-5.red80.x86_64                                                                                                                                                                                                                                        3/37
+  Установка        : zchunk-libs-1.5.1-1.red80.x86_64                                                                                                                                                                                                                                    4/37
+  Установка        : python3-babel-2.12.1-1.red80.noarch                                                                                                                                                                                                                                 5/37
+  Установка        : gcc-plugin-annobin-12.4.0-1.red80.x86_64                                                                                                                                                                                                                            6/37
+  Установка        : xemacs-filesystem-21.5.34-43.20200331hge2ac728aa576.red80.noarch                                                                                                                                                                                                    7/37
+  Установка        : rhash-1.4.2-2.red80.x86_64                                                                                                                                                                                                                                          8/37
+  Установка        : python3-utils-3.1.0-3.red80.noarch                                                                                                                                                                                                                                  9/37
+  Установка        : python3-progressbar2-3.53.2-6.red80.noarch                                                                                                                                                                                                                         10/37
+  Установка        : python3-decorator-5.1.1-4.red80.noarch                                                                                                                                                                                                                             11/37
+  Установка        : python3-gssapi-1.7.3-3.red80.x86_64                                                                                                                                                                                                                                12/37
+  Установка        : python3-requests-gssapi-1.2.3-6.red80.noarch                                                                                                                                                                                                                       13/37
+  Установка        : python3-koji-1.35.1-1.red80.noarch                                                                                                                                                                                                                                 14/37
+  Установка        : koji-1.35.1-1.red80.noarch                                                                                                                                                                                                                                         15/37
+  Установка        : python3-argcomplete-2.0.0-1.red80.noarch                                                                                                                                                                                                                           16/37
+  Установка        : perl-srpm-macros-1-24.red80.noarch                                                                                                                                                                                                                                 17/37
+  Установка        : jsoncpp-1.9.5-1.red80.x86_64                                                                                                                                                                                                                                       18/37
+  Установка        : cmake-data-3.28.3-1.red80.noarch                                                                                                                                                                                                                                   19/37
+  Установка        : cmake-3.28.3-1.red80.x86_64                                                                                                                                                                                                                                        20/37
+  Установка        : http-parser-2.9.4-6.red80.x86_64                                                                                                                                                                                                                                   21/37
+  Установка        : libgit2-1.7.2-2.red80.x86_64                                                                                                                                                                                                                                       22/37
+  Установка        : python3-pygit2-1.13.3-2.red80.x86_64                                                                                                                                                                                                                               23/37
+  Установка        : fakeroot-libs-1.25.3-4.red80.x86_64                                                                                                                                                                                                                                24/37
+  Установка        : fakeroot-1.25.3-4.red80.x86_64                                                                                                                                                                                                                                     25/37
+  Запуск скриптлета: fakeroot-1.25.3-4.red80.x86_64                                                                                                                                                                                                                                     25/37
+  Установка        : drpm-0.5.0-6.red80.x86_64                                                                                                                                                                                                                                          26/37
+  Установка        : createrepo_c-libs-0.20.1-1.red80.x86_64                                                                                                                                                                                                                            27/37
+  Установка        : annobin-docs-10.94-3.red80.noarch                                                                                                                                                                                                                                  28/37
+  Установка        : annobin-plugin-gcc-10.94-3.red80.x86_64                                                                                                                                                                                                                            29/37
+  Установка        : redos-rpm-config-1.2-14.red80.noarch                                                                                                                                                                                                                               30/37
+  Запуск скриптлета: redos-rpm-config-1.2-14.red80.noarch                                                                                                                                                                                                                               30/37
+  Установка        : python-srpm-macros-3.11-4.red80.noarch                                                                                                                                                                                                                             31/37
+  Установка        : rpm-build-4.18.2-3.red80.x86_64                                                                                                                                                                                                                                    32/37
+  Установка        : python3-rpmautospec-0.3.0-1.red80.noarch                                                                                                                                                                                                                           33/37
+  Установка        : rpmdevtools-9.5-5.red80.noarch                                                                                                                                                                                                                                     34/37
+  Установка        : createrepo_c-0.20.1-1.red80.x86_64                                                                                                                                                                                                                                 35/37
+  Установка        : systemd-rpm-macros-253.30-1.red80.noarch                                                                                                                                                                                                                           36/37
+  Установка        : dnf-utils-4.4.2-1.red80.noarch                                                                                                                                                                                                                                     37/37
+  Запуск скриптлета: dnf-utils-4.4.2-1.red80.noarch                                                                                                                                                                                                                                     37/37
+  Проверка         : annobin-docs-10.94-3.red80.noarch                                                                                                                                                                                                                                   1/37
+  Проверка         : annobin-plugin-gcc-10.94-3.red80.x86_64                                                                                                                                                                                                                             2/37
+  Проверка         : createrepo_c-0.20.1-1.red80.x86_64                                                                                                                                                                                                                                  3/37
+  Проверка         : createrepo_c-libs-0.20.1-1.red80.x86_64                                                                                                                                                                                                                             4/37
+  Проверка         : debugedit-5.0-5.red80.x86_64                                                                                                                                                                                                                                        5/37
+  Проверка         : dnf-utils-4.4.2-1.red80.noarch                                                                                                                                                                                                                                      6/37
+  Проверка         : drpm-0.5.0-6.red80.x86_64                                                                                                                                                                                                                                           7/37
+  Проверка         : dwz-0.15-2.red80.x86_64                                                                                                                                                                                                                                             8/37
+  Проверка         : fakeroot-1.25.3-4.red80.x86_64                                                                                                                                                                                                                                      9/37
+  Проверка         : fakeroot-libs-1.25.3-4.red80.x86_64                                                                                                                                                                                                                                10/37
+  Проверка         : http-parser-2.9.4-6.red80.x86_64                                                                                                                                                                                                                                   11/37
+  Проверка         : jsoncpp-1.9.5-1.red80.x86_64                                                                                                                                                                                                                                       12/37
+  Проверка         : libgit2-1.7.2-2.red80.x86_64                                                                                                                                                                                                                                       13/37
+  Проверка         : perl-srpm-macros-1-24.red80.noarch                                                                                                                                                                                                                                 14/37
+  Проверка         : python3-argcomplete-2.0.0-1.red80.noarch                                                                                                                                                                                                                           15/37
+  Проверка         : python3-decorator-5.1.1-4.red80.noarch                                                                                                                                                                                                                             16/37
+  Проверка         : python3-gssapi-1.7.3-3.red80.x86_64                                                                                                                                                                                                                                17/37
+  Проверка         : python3-progressbar2-3.53.2-6.red80.noarch                                                                                                                                                                                                                         18/37
+  Проверка         : python3-pygit2-1.13.3-2.red80.x86_64                                                                                                                                                                                                                               19/37
+  Проверка         : python3-requests-gssapi-1.2.3-6.red80.noarch                                                                                                                                                                                                                       20/37
+  Проверка         : python3-rpmautospec-0.3.0-1.red80.noarch                                                                                                                                                                                                                           21/37
+  Проверка         : python3-utils-3.1.0-3.red80.noarch                                                                                                                                                                                                                                 22/37
+  Проверка         : rhash-1.4.2-2.red80.x86_64                                                                                                                                                                                                                                         23/37
+  Проверка         : xemacs-filesystem-21.5.34-43.20200331hge2ac728aa576.red80.noarch                                                                                                                                                                                                   24/37
+  Проверка         : cmake-3.28.3-1.red80.x86_64                                                                                                                                                                                                                                        25/37
+  Проверка         : cmake-data-3.28.3-1.red80.noarch                                                                                                                                                                                                                                   26/37
+  Проверка         : cmake-rpm-macros-3.28.3-1.red80.noarch                                                                                                                                                                                                                             27/37
+  Проверка         : gcc-plugin-annobin-12.4.0-1.red80.x86_64                                                                                                                                                                                                                           28/37
+  Проверка         : koji-1.35.1-1.red80.noarch                                                                                                                                                                                                                                         29/37
+  Проверка         : python-srpm-macros-3.11-4.red80.noarch                                                                                                                                                                                                                             30/37
+  Проверка         : python3-babel-2.12.1-1.red80.noarch                                                                                                                                                                                                                                31/37
+  Проверка         : python3-koji-1.35.1-1.red80.noarch                                                                                                                                                                                                                                 32/37
+  Проверка         : redos-rpm-config-1.2-14.red80.noarch                                                                                                                                                                                                                               33/37
+  Проверка         : rpm-build-4.18.2-3.red80.x86_64                                                                                                                                                                                                                                    34/37
+  Проверка         : rpmdevtools-9.5-5.red80.noarch                                                                                                                                                                                                                                     35/37
+  Проверка         : systemd-rpm-macros-253.30-1.red80.noarch                                                                                                                                                                                                                           36/37
+  Проверка         : zchunk-libs-1.5.1-1.red80.x86_64                                                                                                                                                                                                                                   37/37
+
+Установлен:
+  annobin-docs-10.94-3.red80.noarch        annobin-plugin-gcc-10.94-3.red80.x86_64     cmake-3.28.3-1.red80.x86_64               cmake-data-3.28.3-1.red80.noarch              cmake-rpm-macros-3.28.3-1.red80.noarch    createrepo_c-0.20.1-1.red80.x86_64
+  createrepo_c-libs-0.20.1-1.red80.x86_64  debugedit-5.0-5.red80.x86_64                dnf-utils-4.4.2-1.red80.noarch            drpm-0.5.0-6.red80.x86_64                     dwz-0.15-2.red80.x86_64                   fakeroot-1.25.3-4.red80.x86_64
+  fakeroot-libs-1.25.3-4.red80.x86_64      gcc-plugin-annobin-12.4.0-1.red80.x86_64    http-parser-2.9.4-6.red80.x86_64          jsoncpp-1.9.5-1.red80.x86_64                  koji-1.35.1-1.red80.noarch                libgit2-1.7.2-2.red80.x86_64
+  perl-srpm-macros-1-24.red80.noarch       python-srpm-macros-3.11-4.red80.noarch      python3-argcomplete-2.0.0-1.red80.noarch  python3-babel-2.12.1-1.red80.noarch           python3-decorator-5.1.1-4.red80.noarch    python3-gssapi-1.7.3-3.red80.x86_64
+  python3-koji-1.35.1-1.red80.noarch       python3-progressbar2-3.53.2-6.red80.noarch  python3-pygit2-1.13.3-2.red80.x86_64      python3-requests-gssapi-1.2.3-6.red80.noarch  python3-rpmautospec-0.3.0-1.red80.noarch  python3-utils-3.1.0-3.red80.noarch
+  redos-rpm-config-1.2-14.red80.noarch     rhash-1.4.2-2.red80.x86_64                  rpm-build-4.18.2-3.red80.x86_64           rpmdevtools-9.5-5.red80.noarch                systemd-rpm-macros-253.30-1.red80.noarch  xemacs-filesystem-21.5.34-43.20200331hge2ac728aa576.red80.noarch
+  zchunk-libs-1.5.1-1.red80.x86_64
+
+Выполнено!
+```
+
+</ul>
+
+Скачиваем Програмное обеспечивание которое будем исспользовать к качестве тестового для разверотывния через RPM Пакеты
+
+```bash
+[jecka@localhost ~]$ wget https://github.com/prometheus/prometheus/releases/download/v3.4.1/prometheus-3.4.1.linux-amd64.tar.gz
+--2025-06-02 23:03:27--  https://github.com/prometheus/prometheus/releases/download/v3.4.1/prometheus-3.4.1.linux-amd64.tar.gz
+Распознаётся github.com (github.com)… 140.82.121.3
+Подключение к github.com (github.com)|140.82.121.3|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа… 302 Found
+Адрес: https://objects.githubusercontent.com/github-production-release-asset-2e65be/6838921/9fa63ebf-79ae-453f-9f67-1ab91f4cb98e?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=releaseassetproduction%2F20250602%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250602T200328Z&X-Amz-Expires=300&X-Amz-Signature=d332d4519a3f6cd65cf3c165b489c66b0f9ec476da8e3ef6cf47fe56f69fa018&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dprometheus-3.4.1.linux-amd64.tar.gz&response-content-type=application%2Foctet-stream [переход]
+--2025-06-02 23:03:28--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/6838921/9fa63ebf-79ae-453f-9f67-1ab91f4cb98e?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=releaseassetproduction%2F20250602%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250602T200328Z&X-Amz-Expires=300&X-Amz-Signature=d332d4519a3f6cd65cf3c165b489c66b0f9ec476da8e3ef6cf47fe56f69fa018&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dprometheus-3.4.1.linux-amd64.tar.gz&response-content-type=application%2Foctet-stream
+Распознаётся objects.githubusercontent.com (objects.githubusercontent.com)… 185.199.108.133
+Подключение к objects.githubusercontent.com (objects.githubusercontent.com)|185.199.108.133|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа… 200 OK
+Длина: 117287996 (112M) [application/octet-stream]
+Сохранение в: «prometheus-3.4.1.linux-amd64.tar.gz»
+
+prometheus-3.4.1.linux-amd64.tar.gz                                     100%[=============================================================================================================================================================================>] 111,85M  62,7MB/s    за 1,8s
+
+2025-06-02 23:03:30 (62,7 MB/s) - «prometheus-3.4.1.linux-amd64.tar.gz» сохранён [117287996/117287996]
+
+```
+
+Создаем дерево для разработки и копируем необходимые файлы 
+
+```bash
+[jecka@localhost create]$ rpmdev-setuptree
+[jecka@localhost tmp]$ touch  /home/jecka/rpmbuild/SPECS/prometheus.spec
+[jecka@localhost tmp]$ cp /home/jecka/prometheus-3.4.1.linux-amd64.tar.gz /home/jecka/rpmbuild/SOURCE/
+[jecka@localhost rpmbuild]$ cd SOURCES/
+[jecka@localhost SOURCES]$ touch prometheus.service
+```
+
+Файлы подготовлены
+
+
+Вид prometheus.service
+
+```bash
+  GNU nano 8.0                                                                                                                          prometheus.service
+[Unit]
+Description=Prometheus Monitoring System and Time Series Database
+Documentation=https://prometheus.io/docs/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+Type=simple
+ExecStart=/opt/prometheus/prometheus \
+    --config.file /opt/prometheus/prometheus.yml \
+    --storage.tsdb.path /var/lib/prometheus/ \
+    --web.console.libraries=/opt/prometheus/consoles/libraries \
+    --web.console.templates=/opt/prometheus/consoles/templates \
+    --web.listen-address=:9090 \
+    --log.level=info
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Вид созданного файла спецификации для RPM
+
+```bash
+Name        : prometheus
+Version     : 3.4.1
+Release     : 1%{?dist}
+Summary     : RPM package for Prometheus
+URL         : https://prometheus.io/
+License     : Apache-2.0 + GPL-3.0-or-later OR CC-BY-SA-4.0, FSF, MIT
+Group       : System Environment/Monitoring
+Source0      : %{name}-%{version}.linux-amd64.tar.gz
+Source1     : prometheus.service
+Prefix:         /opt/prometheus
+
+%description
+This package contains Prometheus, a systems and service monitoring toolkit.
+
+%prep
+%setup -q -n prometheus-%{version}.linux-amd64
+
+%build
+# Binary build not required
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/opt/prometheus
+tar xzf %{SOURCE0} -C %{buildroot}/opt/prometheus --strip-components=1
+
+# Copy service file to systemd directory
+mkdir -p %{buildroot}/etc/systemd/system
+cp %{SOURCE1} %{buildroot}/etc/systemd/system/prometheus.service
+
+%files
+%defattr(-, root, root)
+/opt/prometheus/*
+/etc/systemd/system/prometheus.service
+
+%post
+systemctl daemon-reload || :
+if ! systemctl is-active --quiet prometheus.service ; then
+   echo "The 'prometheus' service was installed but it isn't running."
+fi
+
+%preun
+if [ "$1" = "0" ]; then
+   # Package removal, stop service before removing unit file
+   if systemctl is-active --quiet prometheus.service ; then
+       systemctl stop prometheus.service || :
+   fi
+   systemctl disable prometheus.service || :
+fi
+
+%changelog
+* Fri Sep 17 2021 M.E. User <jecka@iaccpet.ru> - 3.4.1
+- Initial Release
+
+```
+
+#### 2.2 Создание RPM пакета
+
+```bash
+[jecka@localhost SPECS]$ rpmbuild -ba prometheus.spec
+setting SOURCE_DATE_EPOCH=1631836800
+Выполняется(%prep): /bin/sh -e /var/tmp/rpm-tmp.HzfLG2
++ umask 022
++ cd /home/jecka/rpmbuild/BUILD
++ cd /home/jecka/rpmbuild/BUILD
++ rm -rf prometheus-3.4.1.linux-amd64
++ /usr/lib/rpm/rpmuncompress -x /home/jecka/rpmbuild/SOURCES/prometheus-3.4.1.linux-amd64.tar.gz
++ STATUS=0
++ '[' 0 -ne 0 ']'
++ cd prometheus-3.4.1.linux-amd64
++ /usr/bin/chmod -Rf a+rX,u+w,g-w,o-w .
++ RPM_EC=0
+++ jobs -p
++ exit 0
+Выполняется(%build): /bin/sh -e /var/tmp/rpm-tmp.e5jtjW
++ umask 022
++ cd /home/jecka/rpmbuild/BUILD
++ CFLAGS='-O2 -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -U_FORTIFY_SOURCE -Wp,-U_FORTIFY_SOURCE -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redsoft/redsoft-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redsoft/redsoft-annobin-cc1  -m64  -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection'
++ export CFLAGS
++ CXXFLAGS='-O2 -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -U_FORTIFY_SOURCE -Wp,-U_FORTIFY_SOURCE -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redsoft/redsoft-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redsoft/redsoft-annobin-cc1  -m64  -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection'
++ export CXXFLAGS
++ FFLAGS='-O2 -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -U_FORTIFY_SOURCE -Wp,-U_FORTIFY_SOURCE -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redsoft/redsoft-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redsoft/redsoft-annobin-cc1  -m64  -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -I/usr/lib64/gfortran/modules'
++ export FFLAGS
++ FCFLAGS='-O2 -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -U_FORTIFY_SOURCE -Wp,-U_FORTIFY_SOURCE -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redsoft/redsoft-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redsoft/redsoft-annobin-cc1  -m64  -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -I/usr/lib64/gfortran/modules'
++ export FCFLAGS
++ LDFLAGS='-Wl,-z,relro -Wl,--as-needed  -Wl,-z,now -specs=/usr/lib/rpm/redsoft/redsoft-hardened-ld -specs=/usr/lib/rpm/redsoft/redsoft-annobin-cc1 '
++ export LDFLAGS
++ LT_SYS_LIBRARY_PATH=/usr/lib64:
++ export LT_SYS_LIBRARY_PATH
++ CC=gcc
++ export CC
++ CXX=g++
++ export CXX
++ cd prometheus-3.4.1.linux-amd64
++ RPM_EC=0
+++ jobs -p
++ exit 0
+Выполняется(%install): /bin/sh -e /var/tmp/rpm-tmp.Ewj9Ad
++ umask 022
++ cd /home/jecka/rpmbuild/BUILD
++ '[' /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64 '!=' / ']'
++ rm -rf /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64
+++ dirname /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64
++ mkdir -p /home/jecka/rpmbuild/BUILDROOT
++ mkdir /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64
++ cd prometheus-3.4.1.linux-amd64
++ rm -rf /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64
++ mkdir -p /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64/opt/prometheus
++ tar xzf /home/jecka/rpmbuild/SOURCES/prometheus-3.4.1.linux-amd64.tar.gz -C /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64/opt/prometheus --strip-components=1
++ mkdir -p /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64/etc/systemd/system
++ cp /home/jecka/rpmbuild/SOURCES/prometheus.service /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64/etc/systemd/system/prometheus.service
++ /usr/bin/find-debuginfo -j2 --strict-build-id -m -i --build-id-seed 3.4.1-1.red80 --unique-debug-suffix -3.4.1-1.red80.x86_64 --unique-debug-src-base prometheus-3.4.1-1.red80.x86_64 --run-dwz --dwz-low-mem-die-limit 10000000 --dwz-max-die-limit 110000000 -S debugsourcefiles.list /home/jecka/rpmbuild/BUILD/prometheus-3.4.1.linux-amd64
+find-debuginfo: starting
+Extracting debug info from 2 files
+debugedit: /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64/opt/prometheus/prometheus: DWARF version 0 unhandleddebugedit:
+/home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64/opt/prometheus/promtool: DWARF version 0 unhandled
+nm: /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64/opt/prometheus/promtool: no symbols
+nm: /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64/opt/prometheus/prometheus: no symbols
+DWARF-compressing 2 files
+dwz: ./opt/prometheus/prometheus-3.4.1-1.red80.x86_64.debug: Found compressed .debug_abbrev section, not attempting dwz compression
+dwz: ./opt/prometheus/promtool-3.4.1-1.red80.x86_64.debug: Found compressed .debug_abbrev section, not attempting dwz compression
+dwz: Too few files for multifile optimization
+sepdebugcrcfix: Updated 0 CRC32s, 2 CRC32s did match.
+Creating .debug symlinks for symlinks to ELF files
+find-debuginfo: done
++ '[' '%{buildarch}' = noarch ']'
++ QA_CHECK_RPATHS=1
++ case "${QA_CHECK_RPATHS:-}" in
++ /usr/lib/rpm/check-rpaths
++ /usr/lib/rpm/check-buildroot
++ /usr/lib/rpm/redsoft/brp-ldconfig
++ /usr/lib/rpm/brp-compress
++ /usr/lib/rpm/redsoft/brp-strip-lto /usr/bin/strip
++ /usr/lib/rpm/brp-strip-static-archive /usr/bin/strip
++ /usr/lib/rpm/check-rpaths
++ /usr/lib/rpm/redsoft/brp-mangle-shebangs
++ /usr/lib/rpm/redsoft/brp-python-bytecompile '' 1 0
++ /usr/lib/rpm/redsoft/brp-python-hardlink
+Processing files: prometheus-3.4.1-1.red80.x86_64
+Provides: prometheus = 3.4.1-1.red80 prometheus(x86-64) = 3.4.1-1.red80
+Requires(interp): /bin/sh /bin/sh
+Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+Requires(post): /bin/sh
+Requires(preun): /bin/sh
+Processing files: prometheus-debuginfo-3.4.1-1.red80.x86_64
+Provides: debuginfo(build-id) = 1548c4fde1ed4d8d25e14435be871eeb2d77b919 debuginfo(build-id) = 6562ddd46f7232061c454fcd7e931a60a24376ff prometheus-debuginfo = 3.4.1-1.red80 prometheus-debuginfo(x86-64) = 3.4.1-1.red80
+Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+Проверка на неупакованный(е) файл(ы): /usr/lib/rpm/check-files /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64
+Записан: /home/jecka/rpmbuild/SRPMS/prometheus-3.4.1-1.red80.src.rpm
+Записан: /home/jecka/rpmbuild/RPMS/x86_64/prometheus-debuginfo-3.4.1-1.red80.x86_64.rpm
+Записан: /home/jecka/rpmbuild/RPMS/x86_64/prometheus-3.4.1-1.red80.x86_64.rpm
+Выполняется(%clean): /bin/sh -e /var/tmp/rpm-tmp.iqOU9F
++ umask 022
++ cd /home/jecka/rpmbuild/BUILD
++ cd prometheus-3.4.1.linux-amd64
++ /usr/bin/rm -rf /home/jecka/rpmbuild/BUILDROOT/prometheus-3.4.1-1.red80.x86_64
++ RPM_EC=0
+++ jobs -p
++ exit 0
+Выполняется(rmbuild): /bin/sh -e /var/tmp/rpm-tmp.hXx5kn
++ umask 022
++ cd /home/jecka/rpmbuild/BUILD
++ rm -rf prometheus-3.4.1.linux-amd64 prometheus-3.4.1.linux-amd64.gemspec
++ RPM_EC=0
+++ jobs -p
++ exit 0
+
+```
+
+#### 2.1 Проверка установки и работы пакета
+
+
+```bash
+[jecka@localhost x86_64]$ sudo dnf localinstall ./prometheus-3.4.1-1.red80.x86_64.rpm
+[sudo] пароль для jecka:
+Последняя проверка окончания срока действия метаданных: 1:24:16 назад, Вт 03 июн 2025 00:56:26.
+Зависимости разрешены.
+==============================================================================================================================================================================================================================================================================================
+ Пакет                                                                Архитектура                                                      Версия                                                                    Репозиторий                                                            Размер
+==============================================================================================================================================================================================================================================================================================
+Установка:
+ prometheus                                                           x86_64                                                           3.4.1-1.red80                                                             @commandline                                                            45 M
+
+Результат транзакции
+==============================================================================================================================================================================================================================================================================================
+Установка  1 Пакет
+
+Общий размер: 45 M
+Объем изменений: 205 M
+Продолжить? [д/Н]: y
+Загрузка пакетов:
+Проверка транзакции
+Проверка транзакции успешно завершена.
+Идет проверка транзакции
+Тест транзакции проведен успешно.
+Выполнение транзакции
+  Подготовка       :                                                                                                                                                                                                                                                                      1/1
+  Установка        : prometheus-3.4.1-1.red80.x86_64                                                                                                                                                                                                                                      1/1
+  Запуск скриптлета: prometheus-3.4.1-1.red80.x86_64                                                                                                                                                                                                                                      1/1
+The 'prometheus' service was installed but it isn't running.
+
+  Проверка         : prometheus-3.4.1-1.red80.x86_64                                                                                                                                                                                                                                      1/1
+
+Установлен:
+  prometheus-3.4.1-1.red80.x86_64
+
+```
+### 3.Создание репозитория 
+
+```bash
+
+
+[jecka@localhost myrepo]$ sudo createrepo /usr/share/nginx/html/redos
+Directory walk started
+Directory walk done - 1 packages
+Temporary output repo path: /usr/share/nginx/html/redos/.repodata/
+Preparing sqlite DBs
+Pool started (with 5 workers)
+Pool finished
+
+```
+
+Репозиторий доступен по адреcу [repo](http://red.iaccept.ru/redos)
+
+
+
+
+</ul></details>
+
+
