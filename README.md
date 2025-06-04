@@ -1260,8 +1260,6 @@ The 'prometheus' service was installed but it isn't running.
 ### 3.Создание репозитория 
 
 ```bash
-
-
 [jecka@localhost myrepo]$ sudo createrepo /usr/share/nginx/html/redos
 Directory walk started
 Directory walk done - 1 packages
@@ -1272,11 +1270,5 @@ Pool finished
 
 ```
 
-Репозиторий доступен по адреcу [repo](http://red.iaccept.ru/redos)
-
-
-
-
+Репозиторий доступен по адреcу [repo](http://red.iaccept.ru/redos/updates/)
 </ul></details>
-
-
