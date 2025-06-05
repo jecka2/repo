@@ -1341,6 +1341,6 @@ passwd      # для смены пароля root  и после ввода ко
 Далее изменяем наименование  Volume Group при помощи команды Vgrename  текущее_имя новое_имя
 После переимновния необходимо провести изменения в файле /boot/grub/grub.cfg заменить текущее_имя на новое _имя
 
-![Меню режима Recovery](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/grub/renamed_vg.png)
+![Меню режима Recovery](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/grub/renamed _vg.png)
 
 </ul></details>
