@@ -1344,3 +1344,42 @@ passwd      # для смены пароля root  и после ввода ко
 ![Меню режима Recovery](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/grub/renamed_vg.png)
 
 </ul></details>
+
+<details><summary><code>09.Инициализация системы. Systemd</code></summary>
+
+
+### Задачи
+
+Написать service, который будет раз в 30 секунд мониторить лог на предмет наличия ключевого слова (файл лога и ключевое слово должны задаваться в /etc/default).
+<br>
+Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта (https://gist.github.com/cea2k/1318020).
+<br>
+Доработать unit-файл Nginx (nginx.service) для запуска нескольких инстансов сервера с разными конфигурационными файлами одновременно.
+<br>
+
+###  Решение
+
+#### 1. Написать service, который будет раз в 30 секунд мониторить лог на предмет наличия ключевого слова (файл лога и ключевое слово должны задаваться в /etc/default).
+
+#### 2. Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта (https://gist.github.com/cea2k/1318020).
+
+#### 3. Доработать unit-файл Nginx (nginx.service) для запуска нескольких инстансов сервера с разными конфигурационными файлами одновременно.
+
+
+```bash
+[Unit]
+Description=Nginx web server instance %i
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+PIDFile=/run/nginx-%i.pid
+ExecStartPre=/usr/sbin/nginx -c /etc/nginx/%i.conf -t
+ExecStart=/usr/sbin/nginx -c /etc/nginx/%i.conf
+ExecReload=/usr/sbin/nginx -c /etc/nginx/%i.conf -s reload
+ExecStop=/usr/sbin/nginx -c /etc/nginx/%i.conf -s quit
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+```
