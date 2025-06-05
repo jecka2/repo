@@ -1272,3 +1272,75 @@ Pool finished
 
 Репозиторий доступен по адреcу [repo](http://red.iaccept.ru/redos/updates/)
 </ul></details>
+
+
+<details><summary><code>08.Загрузка системы</code></summary>
+
+### Задачи
+
+Включить отображение меню Grub.
+<br>
+Попасть в систему без пароля несколькими способами.
+<br>
+Установить систему с LVM, после чего переименовать VG.
+<br>
+
+
+ ### Решение
+
+ #### 1. Для включения отображения изменим настройки файла /etc/default/grub внесем только изменение в строчки указанные ниже
+
+ ```bash
+GRUB_TIMEOUT_STYLE=menu  #Позволит нам показывать меню
+GRUB_TIMEOUT=5           #Задержка времени для показа меню
+ ```
+ После внесения измеенний введем 
+
+ ```bash
+ jecka@otus:~$ sudo update-grub
+[sudo] password for jecka:
+Sourcing file `/etc/default/grub'
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-6.8.0-60-generic
+Found initrd image: /boot/initrd.img-6.8.0-60-generic
+Found linux image: /boot/vmlinuz-6.8.0-59-generic
+Found initrd image: /boot/initrd.img-6.8.0-59-generic
+Warning: os-prober will not be executed to detect other bootable partitions.
+Systems on them will not be added to the GRUB boot configuration.
+Check GRUB_DISABLE_OS_PROBER documentation entry.
+Adding boot menu entry for UEFI Firmware Settings ...
+done
+ ```
+
+ Это позволит нам применить настройки для grub
+
+
+ #### 2.  Попасть в систему нескольким способами ( изменение пароля пользователя если вы его забыли)
+
+При запуске меню с выбором запуска системы жмем 'e'
+Далее находим строку запуска системы и добовляем в нее init=/bin/bash , что приведет к запуску системы в однопользовательском режиме 
+
+![Добовление init=/bin/bash при запуске системы](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/grub/init.png)
+
+
+После запуска системы в одно пользовательском режиме вводим 
+```bash
+mount -o remount,ro / # Для перемантирования рут в режиме rw
+passwd      # для смены пароля root  и после ввода команды 2 раза вводим новый пароль root  
+```
+![Смена пароля Root](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/grub/Change_password_to_root.png)
+
+#### 3. Переименование VG
+
+Входим в режим восстановлвения в Grub, для этого при запуске выбираем пункт Меню Recovery
+
+![Меню режима Recovery](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/grub/recovery_menu.png)
+
+Выбераем пункт root
+
+Далее изменяем наименование  Volume Group при помощи команды Vgrename  текущее_имя новое_имя
+После переимновния необходимо провести изменения в файле /boot/grub/grub.cfg заменить текущее_имя на новое _имя
+
+![Меню режима Recovery](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/grub/renamed_vg.png)
+
+</ul></details>
