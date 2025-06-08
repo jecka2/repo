@@ -1361,25 +1361,69 @@ passwd      # для смены пароля root  и после ввода ко
 
 #### 1. Написать service, который будет раз в 30 секунд мониторить лог на предмет наличия ключевого слова (файл лога и ключевое слово должны задаваться в /etc/default).
 
+```bash
+[Unit]
+Description = Log Service
+After = syslog.target
+
+[Service]
+User = root
+Group = root
+ExecStart = bash  /home/jecka/search.sh
+Restart = always
+RestartSec = 30
+
+[Install]
+WantedBy = multi-user.target
+
+```
+
+Скрипт Файл
+
+```bash
+
+#!/bin/bash
+source /etc/default.conf
+tail -n 1000 "$Source" | grep "$Keyword" >/var/log/find.log
+```
+
+
+
 #### 2. Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта (https://gist.github.com/cea2k/1318020).
-
-#### 3. Доработать unit-файл Nginx (nginx.service) для запуска нескольких инстансов сервера с разными конфигурационными файлами одновременно.
-
 
 ```bash
 [Unit]
-Description=Nginx web server instance %i
-After=network.target remote-fs.target nss-lookup.target
+Description = fast-swg
+After = network.target
 
 [Service]
-Type=forking
-PIDFile=/run/nginx-%i.pid
-ExecStartPre=/usr/sbin/nginx -c /etc/nginx/%i.conf -t
-ExecStart=/usr/sbin/nginx -c /etc/nginx/%i.conf
-ExecReload=/usr/sbin/nginx -c /etc/nginx/%i.conf -s reload
-ExecStop=/usr/sbin/nginx -c /etc/nginx/%i.conf -s quit
-PrivateTmp=true
+Type = forking
+User = www-data
+Group = www-data
+Environment = "PIDFile=/var/run/fast-svg/php_cgi.pid" "server=127.0.0.1" "port=9000" "user=www-data" "group=www-data"
+ExecStart = /usr/bin/spawn-fcgi -a $server -p $port -u $user -g $group -C 5 -f /usr/bin/php-cgi
+ExecStop = killproc -p php-cgi -QUIT
 
 [Install]
-WantedBy=multi-user.target
+WantedBy = multi-user.target
+```
+
+#### 3. Доработать unit-файл Nginx (nginx.service) для запуска нескольких инстансов сервера с разными конфигурационными файлами одновременно.
+
+```bash
+[Unit]
+Description = Nginx web server instance %i
+After = network.target
+
+[Service]
+Type = forking
+PIDFile = /run/nginx-%i.pid
+ExecStartPre = /usr/sbin/nginx -c /etc/nginx/%i.conf -t
+ExecStart = /usr/sbin/nginx -c /etc/nginx/%i.conf
+ExecReload = /usr/sbin/nginx -c /etc/nginx/%i.conf -s reload
+ExecStop = /usr/sbin/nginx -c /etc/nginx/%i.conf -s quit
+PrivateTmp = true
+
+[Install]
+WantedBy = multi-user.target
 ```
