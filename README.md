@@ -1325,7 +1325,7 @@ done
 
 После запуска системы в одно пользовательском режиме вводим 
 ```bash
-mount -o remount,ro / # Для перемантирования рут в режиме rw
+mount -o remount,rw / # Для перемантирования рут в режиме rw
 passwd      # для смены пароля root  и после ввода команды 2 раза вводим новый пароль root  
 ```
 ![Смена пароля Root](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/grub/Change_password_to_root.png)
