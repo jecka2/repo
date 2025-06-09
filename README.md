@@ -1387,6 +1387,13 @@ source /etc/default.conf
 tail -n 1000 "$Source" | grep "$Keyword" >/var/log/find.log
 ```
 
+Файл с параметрами
+
+```bash
+Source=/var/log/syslog
+Keyword=PID
+
+```
 
 
 #### 2. Установить spawn-fcgi и создать unit-файл (spawn-fcgi.sevice) с помощью переделки init-скрипта (https://gist.github.com/cea2k/1318020).
