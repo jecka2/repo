@@ -1434,3 +1434,76 @@ PrivateTmp = true
 [Install]
 WantedBy = multi-user.target
 ```
+
+</ul></details>
+
+
+<details><summary><code>10.Bash</code></summary>
+
+### Задачи
+
+Написать скрипт для CRON, который раз в час будет формировать письмо и отправлять на заданную почту.
+
+
+Необходимая информация в письме:
+
+Список IP адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
+<br>
+Список запрашиваемых URL (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
+<br>
+Ошибки веб-сервера/приложения c момента последнего запуска;
+<br>
+Список всех кодов HTTP ответа с указанием их кол-ва с момента последнего запуска скрипта.
+<br>
+Скрипт должен предотвращать одновременный запуск нескольких копий, до его завершения.
+<br>
+
+
+### Решение
+
+```bash
+#!/bin/bash
+# Проверка  не запущен ли второй экземпляр
+if PID=`pgrep -x "email.sh"`
+then
+    echo "уже запущен $PID"
+        breake
+else
+
+# Временный Фвайл
+email="/tmp/email.log"
+
+#Параметры от пользователя
+read -p  "ВВедите  количество  строчек с наибольшим колисеством запросов кторое поподет в отчет  "  line
+read -p  "Укажите лог для парсинга  " log
+
+# Оставлено для дебага
+#log="/home/jecka/access-4560-644067.log"
+echo $log
+
+#  Если файл уже есть  удаление
+if [  -e $email ]; then
+    rm $email
+fi
+
+echo  "Список IP адресов (с наибольшим кол-вом запросов"  >>  $email
+grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' $log  | sort | uniq -c  | sort -k1,1nr -k2 | head -n $line >> $email
+
+echo "Список запрашиваемых URL (с наибольшим кол-вом запросов)" >> $email
+grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" $log | sort  | uniq -c | sort -k1,1nr -k2 | head -n $line >> $email
+
+echo "Все коды ошибок" >> $email
+grep -o "[5][0-9][0-9]"  $log | sort | uniq -c  | sort -k1,1nr -k2 >>  $email
+
+echo "Все коды в файле" >> $email
+grep -o "[1-5][0-9][0-9]"  $log | sort | uniq -c  | sort -k1,1nr -k2 >> $email
+
+
+# Отправка почты без авторизации
+echo  'SendPasrslog' | mail -s "Parce log" -a $email  -a "Smtp: someserver.somezone:someport" -a "From:somesendname@somedomain.somezone"   someemail@somedomain.somezone
+
+rm  $email
+
+fi
+
+```
