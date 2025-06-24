@@ -1507,3 +1507,53 @@ rm  $email
 fi
 
 ```
+</ul></details>
+
+<details><summary><code>12. Управление процессами</code></summary>
+
+### Задание 
+
+реализовать 2 конкурирующих процесса по CPU. пробовать запустить с разными nice
+Результат ДЗ - скрипт запускающий 2 процесса с разными nice и замеряющий время выполнения и лог консоли
+
+
+### Решение
+
+
+```bash
+#!/bin/bash
+
+# Время выполнения процесса
+T=1
+
+# Имя файла для записи вывода
+LOG_FILE="/tmp/process_log.txt"
+
+# Удаляем старый лог-файл перед новым запуском
+rm -f "$LOG_FILE"
+exec 1>> $LOG_FILE
+
+
+# Процесс №1 с низким приоритетом (-10)
+echo "Запускаем процесс #1 с высоким приоритетом..."
+START_TIME=$(date +%s)
+nice -n -10 stress -c 1  --verbose --timeout $T\m &
+PID1=$!
+wait $PID1
+END_TIME=$(date +%s)
+EXECUTION_TIME_1=$(( $(echo "$END_TIME - $START_TIME" | bc -l ) ))
+echo "Процесс #1 завершился за ${EXECUTION_TIME_1}s." >> "$LOG_FILE"
+
+# Процесс №2 с нормальным приоритетом (0)
+echo "Запускаем процесс #2 с обычным приоритетом..."
+START_TIME=$(date +%s)
+nice -n  0  stress -c 1  --verbose --timeout $T\m &
+PID2=$!
+wait $PID2
+END_TIME=$(date +%s)
+EXECUTION_TIME_2=$(( $(echo "$END_TIME - $START_TIME" | bc -l ) ))
+echo "Процесс #2 завершился за ${EXECUTION_TIME_2}s." >> "$LOG_FILE"
+```
+
+
+</ul></details>
