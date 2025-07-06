@@ -1678,7 +1678,7 @@ type=AVC msg=audit(1751749001.174:851): avc:  denied  { name_bind } for  pid=499
 
 Послен запуска сервиса  из браузера откроем http:\\ip_адресс_сервера:4881 и посмотрим откроется ли страница
 
-![Страница успешно открывается](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Selinux/Site 4881.png)
+![Страница успешно открывается](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/Selinux/Site 4881.png)
 
 Выключем первое решение путем отключения разрешения
 
@@ -1730,7 +1730,7 @@ pegasus_http_port_t            tcp      5988
 июл 06 00:19:21 localhost.localdomain systemd[1]: Started nginx.service - The nginx HTTP and reverse proxy server.
 ```
 
-![Проверим страницу](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Selinux/Site 4881.png)
+![Проверим страницу](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/Selinux/Site 4881.png)
 
 Удалим порт из правила 
 
@@ -1787,7 +1787,7 @@ pegasus_http_port_t            tcp      5988
 июл 06 00:35:23 localhost.localdomain systemd[1]: Started nginx.service - The nginx HTTP and reverse proxy server.
 
  ```
-![Проверим страницу c портом 4882](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Selinux/Site4882.png)
+![Проверим страницу c портом 4882](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/Selinux/Site4882.png)
 
 Как мы видим, все успешно работает 1 Часть завершена
 
