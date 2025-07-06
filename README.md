@@ -1557,3 +1557,241 @@ echo "Процесс #2 завершился за ${EXECUTION_TIME_2}s." >> "$LO
 
 
 </ul></details>
+
+<details><summary><code>15 Selinux- Когда все запрещено</code></summary>
+
+### Задание
+
+1. Запустить nginx на нестандартном порту 3-мя разными способами:
+переключатели setsebool;
+добавление нестандартного порта в имеющийся тип;
+формирование и установка модуля SELinux.
+К сдаче:
+README с описанием каждого решения (скриншоты и демонстрация приветствуются).
+
+2. Обеспечить работоспособность приложения при включенном selinux.
+
+развернуть приложенный стенд https://github.com/mbfx/otus-linux-adm/tree/master/selinux_dns_problems;
+выяснить причину неработоспособности механизма обновления зоны (см. README);
+предложить решение (или решения) для данной проблемы;
+выбрать одно из решений для реализации, предварительно обосновав выбор;
+реализовать выбранное решение и продемонстрировать его работоспособность.
+
+К сдаче:
+README с анализом причины неработоспособности, возможными способами решения и обоснованием выбора одного из них;
+исправленный стенд или демонстрация работоспособной системы скриншотами и описанием.
+
+###  Решение
+
+1. Запустить nginx на нестандартном порту 3-мя разными способами:
+
+1.1  Изменяем настройки Nginx, что бы он обслуживал порт 4881/tcp
+```bash
+
+    server {
+        listen       80;
+        listen       [::]:80;
+        listen          4881;
+        server_name  _;
+        root         /usr/share/nginx/html;
+        index index.html index.htm;
+        autoindex on;
+```
+Перезапускаем сервис nginx Командой systemctl nginx restart и получаем ошибку, что сервис не может перезапуститься 
+
+```bash 
+[root@localhost ~]# systemctl restart nginx.service
+Job for nginx.service failed because the control process exited with error code.
+See "systemctl status nginx.service" and "journalctl -xeu nginx.service" for details.
+```
+Просмотрим audit.log 
+
+```bash
+[root@localhost ~]# tail -n 20 /var/log/audit/audit.log
+type=USER_ACCT msg=audit(1751748945.106:835): pid=49539 uid=1000 auid=1000 ses=4 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_unix acct="jecka" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="jecka" AUID="jecka"
+type=USER_CMD msg=audit(1751748945.106:836): pid=49539 uid=1000 auid=1000 ses=4 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='cwd="/home/jecka" cmd=7375202D exe="/usr/bin/sudo" terminal=pts/0 res=success'UID="jecka" AUID="jecka"
+type=CRED_REFR msg=audit(1751748945.107:837): pid=49539 uid=1000 auid=1000 ses=4 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:setcred grantors=pam_env,pam_fprintd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="jecka" AUID="jecka"
+type=USER_START msg=audit(1751748945.111:838): pid=49539 uid=1000 auid=1000 ses=4 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:session_open grantors=pam_keyinit,pam_limits,pam_keyinit,pam_limits,pam_systemd,pam_unix acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'UID="jecka" AUID="jecka"
+type=USER_AUTH msg=audit(1751748945.122:839): pid=49541 uid=0 auid=1000 ses=4 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:authentication grantors=pam_rootok acct="root" exe="/usr/bin/su" hostname=? addr=? terminal=/dev/pts/1 res=success'UID="root" AUID="jecka"
+type=USER_ACCT msg=audit(1751748945.122:840): pid=49541 uid=0 auid=1000 ses=4 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:accounting grantors=pam_succeed_if acct="root" exe="/usr/bin/su" hostname=? addr=? terminal=/dev/pts/1 res=success'UID="root" AUID="jecka"
+type=CRED_ACQ msg=audit(1751748945.122:841): pid=49541 uid=0 auid=1000 ses=4 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:setcred grantors=pam_rootok acct="root" exe="/usr/bin/su" hostname=? addr=? terminal=/dev/pts/1 res=success'UID="root" AUID="jecka"
+type=USER_START msg=audit(1751748945.237:842): pid=49541 uid=0 auid=1000 ses=4 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:session_open grantors=pam_keyinit,pam_keyinit,pam_limits,pam_systemd,pam_unix,pam_umask acct="root" exe="/usr/bin/su" hostname=? addr=? terminal=/dev/pts/1 res=success'UID="root" AUID="jecka"
+type=BPF msg=audit(1751748945.274:843): prog-id=115 op=LOAD
+type=BPF msg=audit(1751748945.274:844): prog-id=116 op=LOAD
+type=BPF msg=audit(1751748945.274:845): prog-id=117 op=LOAD
+type=SERVICE_START msg=audit(1751748945.351:846): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=SERVICE_STOP msg=audit(1751748975.390:847): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'UID="root" AUID="unset"
+type=BPF msg=audit(1751748975.398:848): prog-id=117 op=UNLOAD
+type=BPF msg=audit(1751748975.398:849): prog-id=116 op=UNLOAD
+type=BPF msg=audit(1751748975.398:850): prog-id=115 op=UNLOAD
+type=AVC msg=audit(1751749001.174:851): avc:  denied  { name_bind } for  pid=49945 comm="nginx" src=4881 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket permissive=0
+type=SYSCALL msg=audit(1751749001.174:851): arch=c000003e syscall=49 success=no exit=-13 a0=a a1=557ab228b2d8 a2=10 a3=7ffc1fba7300 items=0 ppid=1 pid=49945 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="nginx" exe="/usr/sbin/nginx" subj=system_u:system_r:httpd_t:s0 key=(null)ARCH=x86_64 SYSCALL=bind AUID="unset" UID="root" GID="root" EUID="root" SUID="root" FSUID="root" EGID="root" SGID="root" FSGID="root"
+type=PROCTITLE msg=audit(1751749001.174:851): proctitle=2F7573722F7362696E2F6E67696E78002D74
+type=SERVICE_START msg=audit(1751749001.176:852): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=nginx comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=failed'UID="root" AUID="unset"
+```
+
+В нем мы найдем  avc:  denied  { name_bind } for  pid=49945 comm="nginx" src=4881 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket permissive=0,  это  говорит нам о том, что сервер не может запуститься на порту 4881 
+
+Уточним через утилиту audit2why  что происходит 
+
+```bash 
+[root@localhost ~]# grep 1751749001.174:851 /var/log/audit/audit.log  | audit2why
+type=AVC msg=audit(1751749001.174:851): avc:  denied  { name_bind } for  pid=49945 comm="nginx" src=4881 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket permissive=0
+
+        Was caused by:
+        The boolean nis_enabled was set incorrectly.
+        Description:
+        Allow nis to enabled
+
+        Allow access by executing:
+        # setsebool -P nis_enabled 1
+```
+На выходе получаем требуемые действия для того, что бы наш сервис запустился на не стандартном порту.
+ВЫполним действия и пробуем запустить сервис
+
+```bash 
+ setsebool -P nis_enabled on
+[root@localhost ~]# systemctl restart nginx.service
+[root@localhost ~]# systemctl status nginx.service
+● nginx.service - The nginx HTTP and reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
+    Drop-In: /usr/lib/systemd/system/service.d
+             └─10-timeout-abort.conf
+     Active: active (running) since Sun 2025-07-06 00:01:04 MSK; 8s ago
+    Process: 51543 ExecStartPre=/usr/bin/rm -f /run/nginx.pid (code=exited, status=0/SUCCESS)
+    Process: 51550 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=0/SUCCESS)
+    Process: 51551 ExecStart=/usr/sbin/nginx (code=exited, status=0/SUCCESS)
+   Main PID: 51552 (nginx)
+      Tasks: 3 (limit: 4667)
+     Memory: 3.3M
+        CPU: 78ms
+     CGroup: /system.slice/nginx.service
+             ├─51552 "nginx: master process /usr/sbin/nginx"
+             ├─51553 "nginx: worker process"
+             └─51554 "nginx: worker process"
+
+июл 06 00:01:04 localhost.localdomain systemd[1]: Starting nginx.service - The nginx HTTP and reverse proxy server...
+июл 06 00:01:04 localhost.localdomain nginx[51550]: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+июл 06 00:01:04 localhost.localdomain nginx[51550]: nginx: configuration file /etc/nginx/nginx.conf test is successful
+июл 06 00:01:04 localhost.localdomain systemd[1]: Started nginx.service - The nginx HTTP and reverse proxy server.
+```
+
+Послен запуска сервиса  из браузера откроем http:\\ip_адресс_сервера:4881 и посмотрим откроется ли страница
+
+![Страница успешно открывается](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Selinux/Site 4881.png)
+
+Выключем первое решение путем отключения разрешения
+
+```bash
+[root@localhost ~]# setsebool -P nis_enabled off
+```
+
+
+1.2 Пробуем Добавить нестандартный порт 
+
+```Basg
+[root@localhost ~]#  semanage port -l | grep http
+http_cache_port_t              tcp      8080, 8118, 8123, 10001-10010
+http_cache_port_t              udp      3130
+http_port_t                    tcp      80, 81, 443, 488, 8008, 8009, 8443, 9000
+pegasus_http_port_t            tcp      5988
+pegasus_https_port_t           tcp      5989
+[root@localhost ~]# semanage port -a -t http_port_t -p tcp 4881
+[root@localhost ~]#  semanage port -l | grep  http_port_t
+http_port_t                    tcp      4881, 80, 81, 443, 488, 8008, 8009, 8443, 9000
+pegasus_http_port_t            tcp      5988
+```
+
+Порт добавлен. Пробуем перезапусить службу и видим что служба успешно запуститься
+
+```bash 
+[root@localhost ~]# systemctl restart nginx
+[root@localhost ~]# systemctl status nginx.service
+● nginx.service - The nginx HTTP and reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
+    Drop-In: /usr/lib/systemd/system/service.d
+             └─10-timeout-abort.conf
+     Active: active (running) since Sun 2025-07-06 00:19:21 MSK; 10s ago
+    Process: 58121 ExecStartPre=/usr/bin/rm -f /run/nginx.pid (code=exited, status=0/SUCCESS)
+    Process: 58122 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=0/SUCCESS)
+    Process: 58123 ExecStart=/usr/sbin/nginx (code=exited, status=0/SUCCESS)
+   Main PID: 58124 (nginx)
+      Tasks: 3 (limit: 4667)
+     Memory: 3.3M
+        CPU: 79ms
+     CGroup: /system.slice/nginx.service
+             ├─58124 "nginx: master process /usr/sbin/nginx"
+             ├─58125 "nginx: worker process"
+             └─58126 "nginx: worker process"
+
+июл 06 00:19:21 localhost.localdomain systemd[1]: Starting nginx.service - The nginx HTTP and reverse proxy server...
+июл 06 00:19:21 localhost.localdomain nginx[58122]: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+июл 06 00:19:21 localhost.localdomain nginx[58122]: nginx: configuration file /etc/nginx/nginx.conf test is successful
+июл 06 00:19:21 localhost.localdomain systemd[1]: Started nginx.service - The nginx HTTP and reverse proxy server.
+```
+
+![Проверим страницу](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Selinux/Site 4881.png)
+
+Удалим порт из правила 
+
+```bash
+[root@localhost ~]#  semanage port -d -t http_port_t -p tcp 4881
+[root@localhost ~]# semanage port -l | grep  http_port_t
+http_port_t                    tcp      80, 81, 443, 488, 8008, 8009, 8443, 9000
+pegasus_http_port_t            tcp      5988
+``` 
+
+
+1.3 Для последнего задания изменим порт на 4882 для интереса.
+ На основании лога аудита просим систему создать правило для запуска сервиса на нестандартном порту 
+
+ ```bash
+ server {
+        listen       80;
+        listen       [::]:80;
+        listen          4881;
+        server_name  _;
+        root         /usr/share/nginx/html;
+        index index.html index.htm;
+        autoindex on;
+ ```  
+
+Создадим модуль на основании лога и примененим его, а так же перезапустим сервис после применения
+
+```bash
+ tail -n 5 /var/log/audit/audit.log  | audit2allow -M nginx
+ [root@localhost ~]# semodule -i nginx.pp
+[root@localhost ~]# systemctl start nginx
+[root@localhost ~]# systemctl restart nginx
+[root@localhost ~]# systemctl status nginx
+● nginx.service - The nginx HTTP and reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
+    Drop-In: /usr/lib/systemd/system/service.d
+             └─10-timeout-abort.conf
+     Active: active (running) since Sun 2025-07-06 00:35:23 MSK; 8s ago
+    Process: 63937 ExecStartPre=/usr/bin/rm -f /run/nginx.pid (code=exited, status=0/SUCCESS)
+    Process: 63938 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=0/SUCCESS)
+    Process: 63939 ExecStart=/usr/sbin/nginx (code=exited, status=0/SUCCESS)
+   Main PID: 63940 (nginx)
+      Tasks: 3 (limit: 4667)
+     Memory: 3.3M
+        CPU: 77ms
+     CGroup: /system.slice/nginx.service
+             ├─63940 "nginx: master process /usr/sbin/nginx"
+             ├─63941 "nginx: worker process"
+             └─63942 "nginx: worker process"
+
+июл 06 00:35:23 localhost.localdomain systemd[1]: Starting nginx.service - The nginx HTTP and reverse proxy server...
+июл 06 00:35:23 localhost.localdomain nginx[63938]: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+июл 06 00:35:23 localhost.localdomain nginx[63938]: nginx: configuration file /etc/nginx/nginx.conf test is successful
+июл 06 00:35:23 localhost.localdomain systemd[1]: Started nginx.service - The nginx HTTP and reverse proxy server.
+
+ ```
+![Проверим страницу c портом 4882](https://raw.githubusercontent.com/jecka2/repo/refs/heads/main/screenshots/Selinux/Site4882.png)
+
+Как мы видим, все успешно работает 1 Часть завершена
+
+
+2. 
+
+</ul></details>
